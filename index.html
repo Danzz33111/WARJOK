@@ -1,1911 +1,1730 @@
 <!doctype html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Our Memory</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Our Memory</title>
 
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      html {
-        scroll-behavior: smooth;
-      }
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
 
-      body {
-        min-height: 100vh;
-        font-family: "Segoe UI", system-ui, sans-serif;
-        background: #0a001f;
-        color: #e0f7ff;
-        overflow-x: hidden;
-        position: relative;
-      }
+    body {
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: #0a001f;
+      color: #e0f7ff;
+      overflow-x: hidden;
+      position: relative;
+    }
 
-      #stars-canvas {
-        position: fixed;
-        inset: 0;
-        z-index: 0;
-        pointer-events: none;
-      }
+    #stars-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
 
-      /* Overlay */
-      #overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(10, 0, 31, 0.95); /* sedikit lebih ringan */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        z-index: 99999;
-        cursor: pointer;
-        text-align: center;
-        padding: 20px;
-        transition: opacity 1s ease;
-      }
-      #overlay.fade-out {
-        opacity: 0;
-        pointer-events: none;
-      }
+    h1 {
+      text-align: center;
+      padding: 80px 20px 30px;
+      font-size: 4rem;
+      color: #4cc9f0;
+      text-shadow: 0 0 40px #00b4d8, 0 0 80px #4cc9f0;
+      position: relative;
+      z-index: 2;
+      animation: pulse-glow 4s ease-in-out infinite alternate;
+    }
 
-      /* Judul */
-      h1 {
-        text-align: center;
-        padding: 80px 20px 60px;
-        font-size: 3.5rem;
-        color: #4cc9f0;
-        text-shadow:
-          0 0 30px #00b4d8,
-          0 0 60px #4cc9f0;
-        position: relative;
-        z-index: 2;
-        animation: pulse-glow 4s ease-in-out infinite alternate;
-      }
-      @keyframes pulse-glow {
-        from {
-          text-shadow:
-            0 0 30px #00b4d8,
-            0 0 60px #4cc9f0;
-        }
-        to {
-          text-shadow:
-            0 0 40px #00b4d8,
-            0 0 80px #90e0ff;
-        }
-      }
+    @keyframes pulse-glow {
+      from { text-shadow: 0 0 30px #00b4d8, 0 0 60px #4cc9f0; }
+      to { text-shadow: 0 0 50px #00b4d8, 0 0 90px #90e0ff; }
+    }
 
-      /* Gallery */
-      .gallery {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 35px;
-        padding: 0 6% 100px;
-        max-width: 1500px;
-        margin: auto;
-        position: relative;
-        z-index: 2;
-      }
+    #overlay { position: fixed; inset: 0; background: rgba(10, 0, 31, 0.95); display: flex; justify-content: center; align-items: center; flex-direction: column; z-index: 99999; cursor: pointer; text-align: center; padding: 20px; transition: opacity 1s ease; }
+    #overlay.fade-out { opacity: 0; pointer-events: none; }
 
-      .photo-card {
-        position: relative;
-        border-radius: 24px;
-        overflow: hidden;
-        cursor: pointer;
-        transition:
-          transform 0.8s cubic-bezier(0.23, 1, 0.32, 1),
-          box-shadow 0.8s ease;
-        background: rgba(255, 255, 255, 0.06);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-        will-change: transform;
-      }
+    .filters { 
+      display: flex; 
+      justify-content: center; 
+      gap: 20px; 
+      padding: 20px 20px 50px; 
+      position: relative; 
+      z-index: 3; 
+      flex-wrap: wrap; 
+      transition: opacity 0.4s ease;
+    }
+    .filters.hidden { opacity: 0; pointer-events: none; }
 
-      .photo-card:hover {
-        transform: translateY(-15px) scale(1.06);
-        box-shadow: 0 30px 70px rgba(0, 180, 216, 0.6);
-      }
+    .filter-btn { padding: 14px 38px; border: 2px solid rgba(76, 201, 240, 0.6); background: rgba(10, 0, 31, 0.85); color: #a0e0ff; border-radius: 50px; font-size: 1.2rem; font-weight: 600; cursor: pointer; transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1); backdrop-filter: blur(12px); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); }
+    .filter-btn:hover, .filter-btn.active { background: rgba(76, 201, 240, 0.2); border-color: #4cc9f0; color: #ffffff; transform: translateY(-5px) scale(1.05); box-shadow: 0 0 35px rgba(76, 201, 240, 0.7); }
 
-      .photo-card img,
-      .photo-card video {
-        width: 100%;
-        height: 360px;
-        object-fit: cover;
-        display: block;
-        transition: transform 1s cubic-bezier(0.23, 1, 0.32, 1);
-        will-change: transform;
-      }
+    .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 45px; padding: 0 6% 120px; max-width: 1650px; margin: auto; position: relative; z-index: 2; }
+    .photo-card { position: relative; border-radius: 28px; overflow: hidden; cursor: pointer; transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1); background: rgba(255, 255, 255, 0.06); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5); height: 440px; }
+    .photo-card.hidden { display: none !important; }
+    .photo-card:hover { transform: translateY(-22px) scale(1.05); box-shadow: 0 40px 85px rgba(0, 180, 216, 0.55); }
+    .photo-card img, .photo-card video { width: 100%; height: 100%; object-fit: cover; transition: transform 1.3s ease; }
+    .photo-card:hover img, .photo-card:hover video { transform: scale(1.18); }
 
-      .photo-card:hover img,
-      .photo-card:hover video {
-        transform: scale(1.12);
-      }
+    .media-type { position: absolute; top: 16px; left: 16px; background: rgba(0, 0, 0, 0.75); color: #4cc9f0; padding: 6px 16px; border-radius: 30px; font-size: 0.95rem; z-index: 2; backdrop-filter: blur(8px); }
+    .caption { position: absolute; bottom: 0; width: 100%; padding: 35px 20px 25px; background: linear-gradient(to top, rgba(0,0,0,0.95), transparent); text-align: center; font-size: 1.2rem; color: #e0f7ff; text-shadow: 0 2px 12px #000; }
 
-      .caption {
-        position: absolute;
-        bottom: 0;
-        width: 100%;
-        padding: 25px 15px;
-        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
-        text-align: center;
-        font-size: 1.2rem;
-        color: #e0f7ff;
-        text-shadow: 0 0 15px #000;
-      }
+    /* Lightbox */
+    .lightbox {
+      opacity: 0;
+      visibility: hidden;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 0, 20, 0.98);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: all 0.4s ease;
+      padding: 30px 20px;
+    }
+    .lightbox.active { opacity: 1; visibility: visible; }
 
-      /* Lightbox */
-      .lightbox {
-        opacity: 0;
-        visibility: hidden;
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.97);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        transition: opacity 0.6s ease;
-        padding: 30px 20px;
-      }
+    .lightbox-controls {
+      position: absolute;
+      top: 25px;
+      right: 35px;
+      display: flex;
+      gap: 20px;
+      z-index: 12000;
+    }
+    .minimize-btn, .close-btn, .volume-btn {
+      font-size: 42px;
+      color: #4cc9f0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-shadow: 0 0 15px #00b4d8;
+    }
+    .minimize-btn:hover, .close-btn:hover, .volume-btn:hover {
+      transform: scale(1.25);
+      color: #90e0ff;
+    }
 
-      .lightbox.active {
-        opacity: 1;
-        visibility: visible;
-      }
+    .media-container {
+      position: relative;
+      max-width: 95vw;
+      max-height: 80vh;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 0 80px rgba(76, 201, 240, 0.6);
+    }
+    .lightbox img, .lightbox video {
+      max-width: 100%;
+      max-height: 80vh;
+      border-radius: 24px;
+      object-fit: contain;
+    }
 
-      .media-container {
-        position: relative;
-        max-width: 95vw;
-        max-height: 85vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 15px;
-      }
+    .lightbox-caption {
+      font-size: 1.45rem;
+      color: #4cc9f0;
+      text-align: center;
+      margin-top: 20px;
+      text-shadow: 0 0 15px #000;
+    }
 
-      .lightbox img,
-      .lightbox video {
-        max-width: 100%;
-        max-height: 78vh;
-        width: auto;
-        height: auto;
-        border-radius: 24px;
-        box-shadow: 0 0 80px rgba(0, 180, 216, 0.8);
-        object-fit: contain;
-      }
+    .lightbox-nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 25px;
+      margin-top: 25px;
+      z-index: 12000;
+    }
+    .lightbox-nav button {
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid #4cc9f0;
+      color: #4cc9f0;
+      font-size: 48px;
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .lightbox-nav button:hover {
+      background: rgba(76, 201, 240, 0.3);
+      color: white;
+      transform: scale(1.1);
+    }
 
-      .lightbox-caption {
-        font-size: 1.35rem;
-        color: #4cc9f0;
-        text-align: center;
-        text-shadow: 0 0 15px #000;
-        padding: 0 20px;
-        max-width: 90%;
-      }
+    #auto-slide-btn {
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid #4cc9f0;
+      color: #4cc9f0;
+      font-size: 15px;
+      padding: 12px 32px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: 600;
+      min-width: 180px;
+    }
+    #auto-slide-btn:hover, #auto-slide-btn.active {
+      background: #4cc9f0;
+      color: #0a001f;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stars-canvas"></canvas>
 
-      .lightbox-controls {
-        position: absolute;
-        top: 25px;
-        right: 35px;
-        display: flex;
-        gap: 20px;
-        z-index: 12000;
-      }
+  <div id="overlay">
+    <h2>Our Memory</h2>
+    <p>Klik atau sentuh layar untuk memutar lagu<br>dan Melihat kenangan kita semua</p>
+  </div>
 
-      .minimize-btn,
-      .close-btn {
-        font-size: 48px;
-        color: #4cc9f0;
-        text-shadow: 0 0 20px #00b4d8;
-        cursor: pointer;
-        transition: transform 0.3s ease;
-      }
+  <h1>Our Memory</h1>
 
-      .minimize-btn:hover,
-      .close-btn:hover {
-        transform: scale(1.25);
-        color: #90e0ff;
-      }
+  <div class="filters" id="filters">
+    <button class="filter-btn active" data-filter="all">Semua</button>
+    <button class="filter-btn" data-filter="photo">📷 Foto</button>
+    <button class="filter-btn" data-filter="video">🎥 Video</button>
+  </div>
 
-      .lightbox-nav {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 15px;
-        margin-top: 15px;
-        z-index: 12000;
-      }
+  <div class="gallery">
+   <div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K1.jpeg" loading="lazy" decoding="async" alt="Foto 1" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K2.jpeg" loading="lazy" decoding="async" alt="Foto 2" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K3.jpeg" loading="lazy" decoding="async" alt="Foto 3" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K4.jpeg" loading="lazy" decoding="async" alt="Foto 4" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K5.jpeg" loading="lazy" decoding="async" alt="Foto 5" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K6.jpeg" loading="lazy" decoding="async" alt="Foto 6" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K7.jpeg" loading="lazy" decoding="async" alt="Foto 7" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K8.jpeg" loading="lazy" decoding="async" alt="Foto 8" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K9.jpeg" loading="lazy" decoding="async" alt="Foto 9" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K10.jpeg" loading="lazy" decoding="async" alt="Foto 10" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K11.jpeg" loading="lazy" decoding="async" alt="Foto 11" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K12.jpeg" loading="lazy" decoding="async" alt="Foto 12" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K13.jpeg" loading="lazy" decoding="async" alt="Foto 13" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K14.jpeg" loading="lazy" decoding="async" alt="Foto 14" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K15.jpeg" loading="lazy" decoding="async" alt="Foto 15" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K16.jpeg" loading="lazy" decoding="async" alt="Foto 16" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K17.jpeg" loading="lazy" decoding="async" alt="Foto 17" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K18.jpeg" loading="lazy" decoding="async" alt="Foto 18" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K19.jpeg" loading="lazy" decoding="async" alt="Foto 19" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K20.jpeg" loading="lazy" decoding="async" alt="Foto 20" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K21.jpeg" loading="lazy" decoding="async" alt="Foto 21" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K22.jpeg" loading="lazy" decoding="async" alt="Foto 22" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K23.jpeg" loading="lazy" decoding="async" alt="Foto 23" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K24.jpeg" loading="lazy" decoding="async" alt="Foto 24" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K25.jpeg" loading="lazy" decoding="async" alt="Foto 25" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K26.jpeg" loading="lazy" decoding="async" alt="Foto 26" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K27.jpeg" loading="lazy" decoding="async" alt="Foto 27" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K28.jpeg" loading="lazy" decoding="async" alt="Foto 28" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K29.jpeg" loading="lazy" decoding="async" alt="Foto 29" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K30.jpeg" loading="lazy" decoding="async" alt="Foto 30" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K31.jpeg" loading="lazy" decoding="async" alt="Foto 31" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K32.jpeg" loading="lazy" decoding="async" alt="Foto 32" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K33.jpeg" loading="lazy" decoding="async" alt="Foto 33" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K34.jpeg" loading="lazy" decoding="async" alt="Foto 34" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K35.jpeg" loading="lazy" decoding="async" alt="Foto 35" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K36.jpeg" loading="lazy" decoding="async" alt="Foto 36" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K37.jpeg" loading="lazy" decoding="async" alt="Foto 37" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K38.jpeg" loading="lazy" decoding="async" alt="Foto 38" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K39.jpeg" loading="lazy" decoding="async" alt="Foto 39" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K40.jpeg" loading="lazy" decoding="async" alt="Foto 40" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K41.jpeg" loading="lazy" decoding="async" alt="Foto 41" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K42.jpeg" loading="lazy" decoding="async" alt="Foto 42" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K43.jpeg" loading="lazy" decoding="async" alt="Foto 43" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K44.jpeg" loading="lazy" decoding="async" alt="Foto 44" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K45.jpeg" loading="lazy" decoding="async" alt="Foto 45" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K46.jpeg" loading="lazy" decoding="async" alt="Foto 46" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K47.jpeg" loading="lazy" decoding="async" alt="Foto 47" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K48.jpeg" loading="lazy" decoding="async" alt="Foto 48" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K49.jpeg" loading="lazy" decoding="async" alt="Foto 49" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K50.jpeg" loading="lazy" decoding="async" alt="Foto 50" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K51.jpeg" loading="lazy" decoding="async" alt="Foto 51" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K52.jpeg" loading="lazy" decoding="async" alt="Foto 52" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K53.jpeg" loading="lazy" decoding="async" alt="Foto 53" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K54.jpeg" loading="lazy" decoding="async" alt="Foto 54" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K55.jpeg" loading="lazy" decoding="async" alt="Foto 55" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K56.jpeg" loading="lazy" decoding="async" alt="Foto 56" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K57.jpeg" loading="lazy" decoding="async" alt="Foto 57" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K58.jpeg" loading="lazy" decoding="async" alt="Foto 58" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K59.jpeg" loading="lazy" decoding="async" alt="Foto 59" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K60.jpeg" loading="lazy" decoding="async" alt="Foto 60" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K61.jpeg" loading="lazy" decoding="async" alt="Foto 61" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K62.jpeg" loading="lazy" decoding="async" alt="Foto 62" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K63.jpeg" loading="lazy" decoding="async" alt="Foto 63" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K64.jpeg" loading="lazy" decoding="async" alt="Foto 64" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K65.jpeg" loading="lazy" decoding="async" alt="Foto 65" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K66.jpeg" loading="lazy" decoding="async" alt="Foto 66" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K67.jpeg" loading="lazy" decoding="async" alt="Foto 67" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K68.jpeg" loading="lazy" decoding="async" alt="Foto 68" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K69.jpeg" loading="lazy" decoding="async" alt="Foto 69" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K70.jpeg" loading="lazy" decoding="async" alt="Foto 70" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K71.jpeg" loading="lazy" decoding="async" alt="Foto 71" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K72.jpeg" loading="lazy" decoding="async" alt="Foto 72" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K73.jpeg" loading="lazy" decoding="async" alt="Foto 73" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K74.jpeg" loading="lazy" decoding="async" alt="Foto 74" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K75.jpeg" loading="lazy" decoding="async" alt="Foto 75" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K76.jpeg" loading="lazy" decoding="async" alt="Foto 76" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K77.jpeg" loading="lazy" decoding="async" alt="Foto 77" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K78.jpeg" loading="lazy" decoding="async" alt="Foto 78" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K79.jpeg" loading="lazy" decoding="async" alt="Foto 79" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K80.jpeg" loading="lazy" decoding="async" alt="Foto 80" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K81.jpeg" loading="lazy" decoding="async" alt="Foto 81" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K82.jpeg" loading="lazy" decoding="async" alt="Foto 82" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K83.jpeg" loading="lazy" decoding="async" alt="Foto 83" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K84.jpeg" loading="lazy" decoding="async" alt="Foto 84" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K85.jpeg" loading="lazy" decoding="async" alt="Foto 85" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K86.jpeg" loading="lazy" decoding="async" alt="Foto 86" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K87.jpeg" loading="lazy" decoding="async" alt="Foto 87" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K88.jpeg" loading="lazy" decoding="async" alt="Foto 88" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K89.jpeg" loading="lazy" decoding="async" alt="Foto 89" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K90.jpeg" loading="lazy" decoding="async" alt="Foto 90" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K91.jpeg" loading="lazy" decoding="async" alt="Foto 91" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K92.jpeg" loading="lazy" decoding="async" alt="Foto 92" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K93.jpeg" loading="lazy" decoding="async" alt="Foto 93" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K94.jpeg" loading="lazy" decoding="async" alt="Foto 94" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K95.jpeg" loading="lazy" decoding="async" alt="Foto 95" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K96.jpeg" loading="lazy" decoding="async" alt="Foto 96" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K97.jpeg" loading="lazy" decoding="async" alt="Foto 97" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K98.jpeg" loading="lazy" decoding="async" alt="Foto 98" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K99.jpeg" loading="lazy" decoding="async" alt="Foto 99" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K100.jpeg" loading="lazy" decoding="async" alt="Foto 100" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K101.jpeg" loading="lazy" decoding="async" alt="Foto 101" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K102.jpeg" loading="lazy" decoding="async" alt="Foto 102" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K103.jpeg" loading="lazy" decoding="async" alt="Foto 103" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K104.jpeg" loading="lazy" decoding="async" alt="Foto 104" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K105.jpeg" loading="lazy" decoding="async" alt="Foto 105" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K106.jpeg" loading="lazy" decoding="async" alt="Foto 106" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K107.jpeg" loading="lazy" decoding="async" alt="Foto 107" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K108.jpeg" loading="lazy" decoding="async" alt="Foto 108" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K109.jpeg" loading="lazy" decoding="async" alt="Foto 109" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K110.jpeg" loading="lazy" decoding="async" alt="Foto 110" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K111.jpeg" loading="lazy" decoding="async" alt="Foto 111" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K112.jpeg" loading="lazy" decoding="async" alt="Foto 112" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K113.jpeg" loading="lazy" decoding="async" alt="Foto 113" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K114.jpeg" loading="lazy" decoding="async" alt="Foto 114" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K115.jpeg" loading="lazy" decoding="async" alt="Foto 115" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K116.jpeg" loading="lazy" decoding="async" alt="Foto 116" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K117.jpeg" loading="lazy" decoding="async" alt="Foto 117" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K118.jpeg" loading="lazy" decoding="async" alt="Foto 118" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K119.jpeg" loading="lazy" decoding="async" alt="Foto 119" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K120.jpeg" loading="lazy" decoding="async" alt="Foto 120" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K121.jpeg" loading="lazy" decoding="async" alt="Foto 121" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K122.jpeg" loading="lazy" decoding="async" alt="Foto 122" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K123.jpeg" loading="lazy" decoding="async" alt="Foto 123" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K124.jpeg" loading="lazy" decoding="async" alt="Foto 124" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K125.jpeg" loading="lazy" decoding="async" alt="Foto 125" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K126.jpeg" loading="lazy" decoding="async" alt="Foto 126" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K127.jpeg" loading="lazy" decoding="async" alt="Foto 127" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K128.jpeg" loading="lazy" decoding="async" alt="Foto 128" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K129.jpeg" loading="lazy" decoding="async" alt="Foto 129" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K130.jpeg" loading="lazy" decoding="async" alt="Foto 130" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K131.jpeg" loading="lazy" decoding="async" alt="Foto 131" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K132.jpeg" loading="lazy" decoding="async" alt="Foto 132" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K133.jpeg" loading="lazy" decoding="async" alt="Foto 133" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K134.jpeg" loading="lazy" decoding="async" alt="Foto 134" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K135.jpeg" loading="lazy" decoding="async" alt="Foto 135" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K136.jpeg" loading="lazy" decoding="async" alt="Foto 136" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K137.jpeg" loading="lazy" decoding="async" alt="Foto 137" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K138.jpeg" loading="lazy" decoding="async" alt="Foto 138" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K139.jpeg" loading="lazy" decoding="async" alt="Foto 139" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K140.jpeg" loading="lazy" decoding="async" alt="Foto 140" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K141.jpeg" loading="lazy" decoding="async" alt="Foto 141" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K142.jpeg" loading="lazy" decoding="async" alt="Foto 142" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K143.jpeg" loading="lazy" decoding="async" alt="Foto 143" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K144.jpeg" loading="lazy" decoding="async" alt="Foto 144" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K145.jpeg" loading="lazy" decoding="async" alt="Foto 145" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K146.jpeg" loading="lazy" decoding="async" alt="Foto 146" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K147.jpeg" loading="lazy" decoding="async" alt="Foto 147" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K148.jpeg" loading="lazy" decoding="async" alt="Foto 148" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K149.jpeg" loading="lazy" decoding="async" alt="Foto 149" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K150.jpeg" loading="lazy" decoding="async" alt="Foto 150" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K151.jpeg" loading="lazy" decoding="async" alt="Foto 151" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K152.jpeg" loading="lazy" decoding="async" alt="Foto 152" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K153.jpeg" loading="lazy" decoding="async" alt="Foto 153" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="K154.jpeg" loading="lazy" decoding="async" alt="Foto 154" />
+  <div class="caption"></div>
+</div>
 
-      .lightbox-nav button {
-        background: rgba(0, 0, 0, 0.75);
-        border: 2px solid rgba(76, 201, 240, 0.8);
-        color: #4cc9f0;
-        font-size: 52px;
-        width: 75px;
-        height: 75px;
-        border-radius: 50%;
-        cursor: pointer;
-        box-shadow:
-          0 0 30px rgba(0, 180, 216, 0.9),
-          0 10px 40px rgba(0, 0, 0, 0.7);
-        transition: all 0.3s ease;
-      }
+<!-- ==================== IMG Series ==================== -->
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5450.JPG" loading="lazy" decoding="async" alt="Foto 155" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5451.JPG" loading="lazy" decoding="async" alt="Foto 156" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5452.JPG" loading="lazy" decoding="async" alt="Foto 157" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5453.JPG" loading="lazy" decoding="async" alt="Foto 158" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5454.JPG" loading="lazy" decoding="async" alt="Foto 159" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5455.JPG" loading="lazy" decoding="async" alt="Foto 160" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5456.JPG" loading="lazy" decoding="async" alt="Foto 161" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5457.JPG" loading="lazy" decoding="async" alt="Foto 162" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5458.JPG" loading="lazy" decoding="async" alt="Foto 163" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5459.JPG" loading="lazy" decoding="async" alt="Foto 164" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5460.JPG" loading="lazy" decoding="async" alt="Foto 165" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5461.JPG" loading="lazy" decoding="async" alt="Foto 166" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5462.JPG" loading="lazy" decoding="async" alt="Foto 167" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5463.JPG" loading="lazy" decoding="async" alt="Foto 168" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5464.JPG" loading="lazy" decoding="async" alt="Foto 169" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5465.JPG" loading="lazy" decoding="async" alt="Foto 170" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5466.JPG" loading="lazy" decoding="async" alt="Foto 171" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5467.JPG" loading="lazy" decoding="async" alt="Foto 172" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5468.JPG" loading="lazy" decoding="async" alt="Foto 173" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5469.JPG" loading="lazy" decoding="async" alt="Foto 174" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5470.JPG" loading="lazy" decoding="async" alt="Foto 175" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5471.JPG" loading="lazy" decoding="async" alt="Foto 176" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5472.JPG" loading="lazy" decoding="async" alt="Foto 177" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5473.JPG" loading="lazy" decoding="async" alt="Foto 178" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5474.JPG" loading="lazy" decoding="async" alt="Foto 179" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5475.JPG" loading="lazy" decoding="async" alt="Foto 180" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5476.JPG" loading="lazy" decoding="async" alt="Foto 181" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5477.JPG" loading="lazy" decoding="async" alt="Foto 182" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5478.JPG" loading="lazy" decoding="async" alt="Foto 183" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5479.JPG" loading="lazy" decoding="async" alt="Foto 184" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5480.JPG" loading="lazy" decoding="async" alt="Foto 185" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5481.JPG" loading="lazy" decoding="async" alt="Foto 186" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5482.JPG" loading="lazy" decoding="async" alt="Foto 187" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5483.JPG" loading="lazy" decoding="async" alt="Foto 188" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5484.JPG" loading="lazy" decoding="async" alt="Foto 189" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5485.JPG" loading="lazy" decoding="async" alt="Foto 190" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5486.JPG" loading="lazy" decoding="async" alt="Foto 191" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5487.JPG" loading="lazy" decoding="async" alt="Foto 192" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5488.JPG" loading="lazy" decoding="async" alt="Foto 193" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5489.JPG" loading="lazy" decoding="async" alt="Foto 194" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5490.JPG" loading="lazy" decoding="async" alt="Foto 195" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5491.JPG" loading="lazy" decoding="async" alt="Foto 196" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5492.JPG" loading="lazy" decoding="async" alt="Foto 197" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5493.JPG" loading="lazy" decoding="async" alt="Foto 198" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5494.JPG" loading="lazy" decoding="async" alt="Foto 199" />
+  <div class="caption"></div>
+</div>
+<div class="photo-card photo">
+  <div class="media-type">📷 Foto</div>
+  <img src="IMG_5495.JPG" loading="lazy" decoding="async" alt="Foto 200" />
+  <div class="caption"></div>
+</div>
 
-      .lightbox-nav button:hover {
-        background: rgba(0, 180, 216, 0.5);
-        color: #ffffff;
-        border-color: #90e0ff;
-        transform: scale(1.12);
-      }
+    <!-- ==================== VIDEO (SUDAH DITANDAI) ==================== -->
 
-      #auto-slide-btn {
-        background: rgba(0, 0, 0, 0.75);
-        border: 2px solid rgba(76, 201, 240, 0.8);
-        color: #4cc9f0;
-        font-size: 15px;
-        padding: 12px 28px;
-        border-radius: 30px;
-        cursor: pointer;
-        box-shadow: 0 0 25px rgba(0, 180, 216, 0.7);
-        transition: 0.3s ease;
-        white-space: nowrap;
-        height: 48px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-      }
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V1.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
 
-      #auto-slide-btn:hover {
-        background: rgba(0, 180, 216, 0.5);
-        color: #fff;
-        border-color: #90e0ff;
-        transform: scale(1.05);
-      }
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V2.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
 
-      #auto-slide-btn.active {
-        background: rgba(0, 180, 216, 0.8);
-        color: #fff;
-      }
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V3.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
 
-      /* Particles */
-      .particles {
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        overflow: hidden;
-        z-index: 1;
-      }
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V4.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
 
-      .particle {
-        position: absolute;
-        color: #4cc9f0;
-        text-shadow: 0 0 15px rgba(76, 201, 240, 0.95);
-        animation:
-          fall linear forwards,
-          sway 7s ease-in-out infinite alternate;
-        opacity: 0;
-        will-change: transform, opacity;
-      }
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V5.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
 
-      @keyframes fall {
-        from {
-          transform: translateY(-150vh) rotate(0deg);
-        }
-        to {
-          transform: translateY(150vh) rotate(1080deg);
-        }
-      }
-      @keyframes sway {
-        from {
-          transform: translateX(-40px);
-        }
-        to {
-          transform: translateX(40px);
-        }
-      }
-    </style>
-  </head>
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V6.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
 
-  <body>
-    <canvas id="stars-canvas"></canvas>
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V7.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
 
-    <!-- Overlay -->
-    <div id="overlay">
-      <h2>Our Memory</h2>
-      <p>
-        Klik atau sentuh layar untuk memutar lagu<br />dan Melihat kenangan kita
-        semua
-      </p>
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V8.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V9.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V10.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V11.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V12.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V13.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V14.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V15.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V16.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V17.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V18.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V19.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V20.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V21.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V22.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V23.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V24.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V25.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V26.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V27.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V28.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V29.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V30.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V31.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V32.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V33.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V34.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V35.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V36.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V37.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V38.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V39.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V40.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V41.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V42.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V43.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V44.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V45.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V46.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V47.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V48.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V49.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V50.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V51.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+<div class="photo-card video">
+  <div class="media-type">🎥 Video</div>
+  <video src="V52.mp4" muted loop playsinline preload="metadata"></video>
+  <div class="caption"></div>
+</div>
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-controls">
+      <span class="minimize-btn" onclick="toggleMinimize()">−</span>
+      <span class="close-btn" onclick="closeLightbox()">×</span>
     </div>
-
-    <div class="particles" id="particles"></div>
-
-    <h1>Our Memory</h1>
-
-    <div class="gallery">
-      <!-- FOTO (ditambah lazy loading) -->
-      <div class="photo-card">
-        <img src="K1.jpeg" loading="lazy" decoding="async" alt="Foto 1" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K2.jpeg" loading="lazy" decoding="async" alt="Foto 2" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K3.jpeg" loading="lazy" decoding="async" alt="Foto 3" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K4.jpeg" loading="lazy" decoding="async" alt="Foto 4" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K5.jpeg" loading="lazy" decoding="async" alt="Foto 5" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K6.jpeg" loading="lazy" decoding="async" alt="Foto 6" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K7.jpeg" loading="lazy" decoding="async" alt="Foto 7" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K8.jpeg" loading="lazy" decoding="async" alt="Foto 8" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K9.jpeg" loading="lazy" decoding="async" alt="Foto 9" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K10.jpeg" loading="lazy" decoding="async" alt="Foto 10" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K11.jpeg" loading="lazy" decoding="async" alt="Foto 11" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K12.jpeg" loading="lazy" decoding="async" alt="Foto 12" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K13.jpeg" loading="lazy" decoding="async" alt="Foto 13" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K14.jpeg" loading="lazy" decoding="async" alt="Foto 14" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K15.jpeg" loading="lazy" decoding="async" alt="Foto 15" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K16.jpeg" loading="lazy" decoding="async" alt="Foto 16" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K17.jpeg" loading="lazy" decoding="async" alt="Foto 17" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K18.jpeg" loading="lazy" decoding="async" alt="Foto 18" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K19.jpeg" loading="lazy" decoding="async" alt="Foto 19" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K20.jpeg" loading="lazy" decoding="async" alt="Foto 20" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K21.jpeg" loading="lazy" decoding="async" alt="Foto 21" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K22.jpeg" loading="lazy" decoding="async" alt="Foto 22" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K23.jpeg" loading="lazy" decoding="async" alt="Foto 23" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K24.jpeg" loading="lazy" decoding="async" alt="Foto 24" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K25.jpeg" loading="lazy" decoding="async" alt="Foto 25" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K26.jpeg" loading="lazy" decoding="async" alt="Foto 26" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K27.jpeg" loading="lazy" decoding="async" alt="Foto 27" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K28.jpeg" loading="lazy" decoding="async" alt="Foto 28" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K29.jpeg" loading="lazy" decoding="async" alt="Foto 29" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K30.jpeg" loading="lazy" decoding="async" alt="Foto 30" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K31.jpeg" loading="lazy" decoding="async" alt="Foto 31" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K32.jpeg" loading="lazy" decoding="async" alt="Foto 32" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K33.jpeg" loading="lazy" decoding="async" alt="Foto 33" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K34.jpeg" loading="lazy" decoding="async" alt="Foto 34" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K35.jpeg" loading="lazy" decoding="async" alt="Foto 35" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K36.jpeg" loading="lazy" decoding="async" alt="Foto 36" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K37.jpeg" loading="lazy" decoding="async" alt="Foto 37" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K38.jpeg" loading="lazy" decoding="async" alt="Foto 38" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K39.jpeg" loading="lazy" decoding="async" alt="Foto 39" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K40.jpeg" loading="lazy" decoding="async" alt="Foto 40" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K41.jpeg" loading="lazy" decoding="async" alt="Foto 41" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K42.jpeg" loading="lazy" decoding="async" alt="Foto 42" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K43.jpeg" loading="lazy" decoding="async" alt="Foto 43" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K44.jpeg" loading="lazy" decoding="async" alt="Foto 44" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K45.jpeg" loading="lazy" decoding="async" alt="Foto 45" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K46.jpeg" loading="lazy" decoding="async" alt="Foto 46" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K47.jpeg" loading="lazy" decoding="async" alt="Foto 47" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K48.jpeg" loading="lazy" decoding="async" alt="Foto 48" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K49.jpeg" loading="lazy" decoding="async" alt="Foto 49" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K50.jpeg" loading="lazy" decoding="async" alt="Foto 50" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K51.jpeg" loading="lazy" decoding="async" alt="Foto 51" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K52.jpeg" loading="lazy" decoding="async" alt="Foto 52" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K53.jpeg" loading="lazy" decoding="async" alt="Foto 53" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K54.jpeg" loading="lazy" decoding="async" alt="Foto 54" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K55.jpeg" loading="lazy" decoding="async" alt="Foto 55" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K56.jpeg" loading="lazy" decoding="async" alt="Foto 56" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K57.jpeg" loading="lazy" decoding="async" alt="Foto 57" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K58.jpeg" loading="lazy" decoding="async" alt="Foto 58" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K59.jpeg" loading="lazy" decoding="async" alt="Foto 59" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K60.jpeg" loading="lazy" decoding="async" alt="Foto 60" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K61.jpeg" loading="lazy" decoding="async" alt="Foto 61" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K62.jpeg" loading="lazy" decoding="async" alt="Foto 62" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K63.jpeg" loading="lazy" decoding="async" alt="Foto 63" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K64.jpeg" loading="lazy" decoding="async" alt="Foto 64" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K65.jpeg" loading="lazy" decoding="async" alt="Foto 65" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K66.jpeg" loading="lazy" decoding="async" alt="Foto 66" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K67.jpeg" loading="lazy" decoding="async" alt="Foto 67" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K68.jpeg" loading="lazy" decoding="async" alt="Foto 68" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K69.jpeg" loading="lazy" decoding="async" alt="Foto 69" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K70.jpeg" loading="lazy" decoding="async" alt="Foto 70" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K71.jpeg" loading="lazy" decoding="async" alt="Foto 71" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K72.jpeg" loading="lazy" decoding="async" alt="Foto 72" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K73.jpeg" loading="lazy" decoding="async" alt="Foto 73" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K74.jpeg" loading="lazy" decoding="async" alt="Foto 74" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K75.jpeg" loading="lazy" decoding="async" alt="Foto 75" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K76.jpeg" loading="lazy" decoding="async" alt="Foto 76" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K77.jpeg" loading="lazy" decoding="async" alt="Foto 77" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K78.jpeg" loading="lazy" decoding="async" alt="Foto 78" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K79.jpeg" loading="lazy" decoding="async" alt="Foto 79" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K80.jpeg" loading="lazy" decoding="async" alt="Foto 80" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K81.jpeg" loading="lazy" decoding="async" alt="Foto 81" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K82.jpeg" loading="lazy" decoding="async" alt="Foto 82" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K83.jpeg" loading="lazy" decoding="async" alt="Foto 83" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K84.jpeg" loading="lazy" decoding="async" alt="Foto 84" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K85.jpeg" loading="lazy" decoding="async" alt="Foto 85" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K86.jpeg" loading="lazy" decoding="async" alt="Foto 86" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K87.jpeg" loading="lazy" decoding="async" alt="Foto 87" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K88.jpeg" loading="lazy" decoding="async" alt="Foto 88" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K89.jpeg" loading="lazy" decoding="async" alt="Foto 89" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K90.jpeg" loading="lazy" decoding="async" alt="Foto 90" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K91.jpeg" loading="lazy" decoding="async" alt="Foto 91" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K92.jpeg" loading="lazy" decoding="async" alt="Foto 92" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K93.jpeg" loading="lazy" decoding="async" alt="Foto 93" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K94.jpeg" loading="lazy" decoding="async" alt="Foto 94" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K95.jpeg" loading="lazy" decoding="async" alt="Foto 95" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K96.jpeg" loading="lazy" decoding="async" alt="Foto 96" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K97.jpeg" loading="lazy" decoding="async" alt="Foto 97" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K98.jpeg" loading="lazy" decoding="async" alt="Foto 98" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K99.jpeg" loading="lazy" decoding="async" alt="Foto 99" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K100.jpeg" loading="lazy" decoding="async" alt="Foto 100" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K101.jpeg" loading="lazy" decoding="async" alt="Foto 101" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K102.jpeg" loading="lazy" decoding="async" alt="Foto 102" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K103.jpeg" loading="lazy" decoding="async" alt="Foto 103" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K104.jpeg" loading="lazy" decoding="async" alt="Foto 104" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K105.jpeg" loading="lazy" decoding="async" alt="Foto 105" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K106.jpeg" loading="lazy" decoding="async" alt="Foto 106" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K107.jpeg" loading="lazy" decoding="async" alt="Foto 107" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K108.jpeg" loading="lazy" decoding="async" alt="Foto 108" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K109.jpeg" loading="lazy" decoding="async" alt="Foto 109" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K110.jpeg" loading="lazy" decoding="async" alt="Foto 110" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K111.jpeg" loading="lazy" decoding="async" alt="Foto 111" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K112.jpeg" loading="lazy" decoding="async" alt="Foto 112" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K113.jpeg" loading="lazy" decoding="async" alt="Foto 113" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K114.jpeg" loading="lazy" decoding="async" alt="Foto 114" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K115.jpeg" loading="lazy" decoding="async" alt="Foto 115" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K116.jpeg" loading="lazy" decoding="async" alt="Foto 116" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K117.jpeg" loading="lazy" decoding="async" alt="Foto 117" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K118.jpeg" loading="lazy" decoding="async" alt="Foto 118" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K119.jpeg" loading="lazy" decoding="async" alt="Foto 119" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K120.jpeg" loading="lazy" decoding="async" alt="Foto 120" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K121.jpeg" loading="lazy" decoding="async" alt="Foto 121" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K122.jpeg" loading="lazy" decoding="async" alt="Foto 122" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K123.jpeg" loading="lazy" decoding="async" alt="Foto 123" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K124.jpeg" loading="lazy" decoding="async" alt="Foto 124" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K125.jpeg" loading="lazy" decoding="async" alt="Foto 125" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K126.jpeg" loading="lazy" decoding="async" alt="Foto 126" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K127.jpeg" loading="lazy" decoding="async" alt="Foto 127" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K128.jpeg" loading="lazy" decoding="async" alt="Foto 128" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K129.jpeg" loading="lazy" decoding="async" alt="Foto 129" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K130.jpeg" loading="lazy" decoding="async" alt="Foto 130" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K131.jpeg" loading="lazy" decoding="async" alt="Foto 131" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K132.jpeg" loading="lazy" decoding="async" alt="Foto 132" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K133.jpeg" loading="lazy" decoding="async" alt="Foto 133" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K134.jpeg" loading="lazy" decoding="async" alt="Foto 134" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K135.jpeg" loading="lazy" decoding="async" alt="Foto 135" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K136.jpeg" loading="lazy" decoding="async" alt="Foto 136" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K137.jpeg" loading="lazy" decoding="async" alt="Foto 137" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K138.jpeg" loading="lazy" decoding="async" alt="Foto 138" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K139.jpeg" loading="lazy" decoding="async" alt="Foto 139" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K140.jpeg" loading="lazy" decoding="async" alt="Foto 140" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K141.jpeg" loading="lazy" decoding="async" alt="Foto 141" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K142.jpeg" loading="lazy" decoding="async" alt="Foto 142" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K143.jpeg" loading="lazy" decoding="async" alt="Foto 143" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K144.jpeg" loading="lazy" decoding="async" alt="Foto 144" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K145.jpeg" loading="lazy" decoding="async" alt="Foto 145" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K146.jpeg" loading="lazy" decoding="async" alt="Foto 146" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K147.jpeg" loading="lazy" decoding="async" alt="Foto 147" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K148.jpeg" loading="lazy" decoding="async" alt="Foto 148" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K149.jpeg" loading="lazy" decoding="async" alt="Foto 149" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K150.jpeg" loading="lazy" decoding="async" alt="Foto 150" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K151.jpeg" loading="lazy" decoding="async" alt="Foto 151" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K152.jpeg" loading="lazy" decoding="async" alt="Foto 152" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K153.jpeg" loading="lazy" decoding="async" alt="Foto 153" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K154.jpeg" loading="lazy" decoding="async" alt="Foto 154" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img src="K155.jpeg" loading="lazy" decoding="async" alt="Foto 155" />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5450.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 155"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5451.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 156"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5452.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 157"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5453.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 158"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5454.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 159"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5455.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 160"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5456.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 161"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5457.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 162"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5458.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 163"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5459.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 164"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5460.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 165"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5461.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 166"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5462.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 167"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5463.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 168"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5464.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 169"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5465.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 170"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5466.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 171"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5467.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 172"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5468.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 173"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5469.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 174"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5470.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 175"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5471.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 176"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5472.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 177"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5473.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 178"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5474.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 179"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5475.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 180"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5476.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 181"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5477.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 182"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5478.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 183"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5479.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 184"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5480.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 185"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5481.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 186"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5482.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 187"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5483.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 188"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5484.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 189"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5485.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 190"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5486.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 191"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5487.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 192"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5488.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 193"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5489.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 194"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5490.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 195"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5491.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 196"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5492.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 197"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5493.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 198"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5494.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 199"
-        />
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <img
-          src="IMG_5495.JPG"
-          loading="lazy"
-          decoding="async"
-          alt="Foto 200"
-        />
-        <div class="caption"></div>
-      </div>
-
-      <!-- VIDEO -->
-      <div class="photo-card">
-        <video src="V1.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V2.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V3.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V4.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V5.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V6.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V7.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V8.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V9.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V10.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V11.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V12.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V13.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V14.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V15.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V16.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V17.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V18.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V19.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V20.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V21.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V22.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V23.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V24.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V25.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V26.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V27.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V28.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V29.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V30.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V31.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V32.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V33.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V34.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V35.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V36.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V37.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V38.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V39.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V40.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V41.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V42.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V43.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V44.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V45.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V46.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V47.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V48.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V49.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V50.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V51.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
-      <div class="photo-card">
-        <video src="V52.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="caption"></div>
-      </div>
+    <div class="media-container" id="media-container"></div>
+    <div class="lightbox-nav">
+      <button onclick="goToPrev()">❮</button>
+      <button onclick="goToNext()">❯</button>
+      <button id="auto-slide-btn" onclick="toggleAutoSlide()">Auto Slide OFF</button>
     </div>
+  </div>
 
-    <!-- LIGHTBOX -->
-    <div class="lightbox" id="lightbox">
-      <div class="lightbox-controls">
-        <span class="minimize-btn" onclick="toggleMinimize()">−</span>
-        <span class="close-btn" onclick="closeLightbox()">×</span>
-      </div>
-
-      <div class="media-container" id="media-container"></div>
-
-      <div class="lightbox-nav">
-        <button onclick="goToPrev()">❮</button>
-        <button onclick="goToNext()">❯</button>
-        <button id="auto-slide-btn" onclick="toggleAutoSlide()">
-          Auto Slide OFF
-        </button>
-      </div>
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-controls">
+      <span class="volume-btn" id="volume-btn" onclick="toggleVolume()">🔊</span>
+      <span class="minimize-btn" onclick="toggleMinimize()">🗖</span>
+      <span class="close-btn" onclick="closeLightbox()">✕</span>
     </div>
+    <div class="media-container" id="media-container"></div>
+    <div class="lightbox-caption" id="lightbox-caption"></div>
+    
+    <div class="lightbox-nav">
+      <button onclick="goToPrev()">❮</button>
+      <button id="auto-slide-btn" onclick="toggleAutoSlide()">Auto Slide OFF</button>
+      <button onclick="goToNext()">❯</button>
+    </div>
+  </div>
 
-    <!-- MUSIK -->
-    <audio id="bgMusic" loop preload="auto">
-      <source src="Hindia - everything u are.mp3" type="audio/mpeg" />
-    </audio>
+  <audio id="bgMusic" loop preload="auto">
+    <source src="Hindia - everything u are.mp3" type="audio/mpeg" />
+  </audio>
 
-    <script>
-      // Throttle helper
-      function throttle(fn, delay = 180) {
-        let last = 0;
-        return function (...args) {
-          const now = Date.now();
-          if (now - last >= delay) {
-            fn(...args);
-            last = now;
-          }
-        };
-      }
+  <script>
+    const filtersContainer = document.getElementById("filters");
+    const music = document.getElementById("bgMusic");
+    let isMuted = false;
 
-      // Variabel global
-      let currentIndex = 0;
-      let slideInterval = null;
-      let isMinimized = false;
-      let autoSlideEnabled = false;
-
-      const photos = document.querySelectorAll(".photo-card");
-      const lightbox = document.getElementById("lightbox");
-      const mediaContainer = document.getElementById("media-container");
-      const autoBtn = document.getElementById("auto-slide-btn");
-
-      // Canvas Stars (dioptimasi)
-      const canvas = document.getElementById("stars-canvas");
-      const ctx = canvas.getContext("2d", { alpha: true });
-      let w = (canvas.width = window.innerWidth);
-      let h = (canvas.height = window.innerHeight);
-      let layers = [];
-      let meteors = [];
-      let time = 0;
-
-      function initLayers() {
-        const isMobile = w < 768;
-        layers = [
-          { count: isMobile ? 90 : 180, speed: 0.018, size: 1.2 },
-          { count: isMobile ? 70 : 140, speed: 0.045, size: 1.8 },
-          { count: isMobile ? 45 : 90, speed: 0.09, size: 2.4 },
-        ];
-        layers.forEach((layer) => {
-          layer.stars = [];
-          for (let i = 0; i < layer.count; i++) {
-            layer.stars.push({
-              x: Math.random() * w,
-              y: Math.random() * h,
-              baseOpacity: Math.random() * 0.6 + 0.4,
-              twinklePhase: Math.random() * Math.PI * 2,
-            });
-          }
+    // Filter
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const filter = btn.dataset.filter;
+        document.querySelectorAll('.photo-card').forEach(card => {
+          card.classList.toggle('hidden', filter !== 'all' && !card.classList.contains(filter));
         });
-      }
+      });
+    });
 
-      function createMeteor() {
-        if (meteors.length > 7) return;
-        const isBig = Math.random() < 0.13;
-        const speed = isBig ? Math.random() * 14 + 11 : Math.random() * 9 + 5;
-        const angle = (Math.random() * Math.PI) / 5 + Math.PI / 10;
-        meteors.push({
-          x: Math.random() * w * 0.6 + w * 0.2,
-          y: -100,
-          speedX: -speed * Math.cos(angle),
-          speedY: speed * Math.sin(angle),
-          width: isBig ? 4.5 : 3,
-          opacity: 1,
-          isBig,
-        });
-      }
+    // Canvas Meteor (tetap sama)
+    const canvas = document.getElementById("stars-canvas");
+    const ctx = canvas.getContext("2d", { alpha: true });
+    let w = canvas.width = window.innerWidth;
+    let h = canvas.height = window.innerHeight;
+    let layers = [], meteors = [], time = 0;
+    let scrollY = 0;
 
-      function drawScene() {
-        ctx.clearRect(0, 0, w, h);
-        time += 0.75;
+    function initLayers() {
+      const isMobile = w < 768;
+      layers = [{ count: isMobile ? 130 : 230, speed: 0.015, size: 1.1, opacity: 0.95 },
+                { count: isMobile ? 85 : 165, speed: 0.04, size: 1.6, opacity: 0.75 },
+                { count: isMobile ? 55 : 105, speed: 0.085, size: 2.2, opacity: 0.55 }];
+      layers.forEach(layer => {
+        layer.stars = [];
+        for (let i = 0; i < layer.count; i++) {
+          layer.stars.push({ x: Math.random()*w, y: Math.random()*h, baseOpacity: Math.random()*0.65+0.45, twinklePhase: Math.random()*Math.PI*2, size: layer.size });
+        }
+      });
+    }
 
-        // Stars
-        layers.forEach((layer) => {
-          ctx.shadowBlur = 10;
-          ctx.shadowColor = "#4cc9f0";
-          layer.stars.forEach((star) => {
-            const opacity =
-              star.baseOpacity +
-              Math.sin(time * 0.019 + star.twinklePhase) * 0.28;
-            ctx.beginPath();
-            ctx.arc(
-              star.x,
-              star.y,
-              layer.size * (0.7 + opacity * 0.6),
-              0,
-              Math.PI * 2,
-            );
-            ctx.fillStyle = `rgba(200, 240, 255, ${opacity})`;
-            ctx.fill();
-
-            star.y += layer.speed;
-            if (star.y > h) star.y = -10;
-          });
-        });
-
-        // Meteors
-        ctx.shadowBlur = 28;
-        for (let i = meteors.length - 1; i >= 0; i--) {
-          const m = meteors[i];
-          const alpha = m.opacity;
-
-          // tail
-          ctx.strokeStyle = `rgba(180,230,255,${alpha * 0.75})`;
-          ctx.lineWidth = m.width;
+    function drawStars() {
+      ctx.clearRect(0, 0, w, h);
+      layers.forEach(layer => {
+        layer.stars.forEach(star => {
+          const twinkle = Math.sin(time * 3 + star.twinklePhase) * 0.35 + 0.75;
+          ctx.fillStyle = `rgba(240, 250, 255, ${star.baseOpacity * twinkle * layer.opacity})`;
           ctx.beginPath();
-          ctx.moveTo(m.x, m.y);
-          ctx.lineTo(m.x - m.speedX * 1.6, m.y - m.speedY * 1.6);
-          ctx.stroke();
-
-          // head
-          ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-          ctx.shadowColor = "#4cc9f0";
-          ctx.beginPath();
-          ctx.arc(m.x, m.y, m.width + 1.5, 0, Math.PI * 2);
+          ctx.arc(star.x, star.y - scrollY * layer.speed * 0.7, star.size, 0, Math.PI * 2);
           ctx.fill();
-
-          m.x += m.speedX;
-          m.y += m.speedY;
-          m.opacity -= 0.016;
-
-          if (m.opacity <= 0 || m.y > h + 180) {
-            if (m.isBig && Math.random() < 0.45) {
-              createSimpleBurst(m.x, m.y);
-            }
-            meteors.splice(i, 1);
-          }
-        }
-        requestAnimationFrame(drawScene);
-      }
-
-      function createSimpleBurst(x, y) {
-        for (let i = 0; i < 12; i++) {
-          const burst = document.createElement("div");
-          burst.className = "heart-explosion";
-          burst.style.position = "fixed";
-          burst.style.left = x + "px";
-          burst.style.top = y + "px";
-          burst.style.fontSize = Math.random() * 1.6 + 1.4 + "rem";
-          burst.innerHTML = "★";
-          burst.style.setProperty("--dx", (Math.random() - 0.5) * 260 + "px");
-          burst.style.setProperty("--dy", (Math.random() - 0.5) * 260 + "px");
-          burst.style.setProperty("--rot", Math.random() * 600 + "deg");
-          document.body.appendChild(burst);
-          setTimeout(() => burst.remove(), 1400);
-        }
-      }
-
-      const throttledResize = throttle(() => {
-        w = canvas.width = window.innerWidth;
-        h = canvas.height = window.innerHeight;
-        initLayers();
-      }, 200);
-
-      window.addEventListener("resize", throttledResize);
-
-      initLayers();
-      setInterval(createMeteor, 750);
-      drawScene();
-
-      // Particles (dioptimasi)
-      function createParticle() {
-        const container = document.getElementById("particles");
-        if (container.children.length > 28) return;
-
-        const p = document.createElement("div");
-        p.className = "particle";
-        p.innerHTML = "★";
-        p.style.fontSize = Math.random() * 1.6 + 1.3 + "rem";
-        p.style.left = Math.random() * 100 + "vw";
-        p.style.animationDuration = Math.random() * 11 + 16 + "s";
-        container.appendChild(p);
-        setTimeout(() => p.remove(), 32000);
-      }
-      setInterval(createParticle, window.innerWidth < 768 ? 320 : 220);
-
-      // Heart Explosion
-      function createHeartExplosion(e, card) {
-        const x = e.clientX;
-        const y = e.clientY;
-        for (let i = 0; i < 22; i++) {
-          const star = document.createElement("div");
-          star.className = "heart-explosion";
-          star.style.position = "fixed";
-          star.style.left = x + "px";
-          star.style.top = y + "px";
-          star.style.fontSize = Math.random() * 2 + 1.4 + "rem";
-          star.innerHTML = "★";
-          const dx = (Math.random() - 0.5) * 340;
-          const dy = (Math.random() - 0.6) * 340;
-          star.style.setProperty("--dx", dx + "px");
-          star.style.setProperty("--dy", dy + "px");
-          star.style.setProperty("--rot", Math.random() * 900 - 450 + "deg");
-          document.body.appendChild(star);
-          setTimeout(() => star.remove(), 1550);
-        }
-      }
-
-      // Overlay & Music
-      const overlay = document.getElementById("overlay");
-      const music = document.getElementById("bgMusic");
-
-      function playMusic() {
-        music.volume = 0;
-        music.play().catch(() => {});
-        let vol = 0;
-        const fade = setInterval(() => {
-          vol += 0.018;
-          if (vol >= 0.42) {
-            music.volume = 0.42;
-            clearInterval(fade);
-          } else music.volume = vol;
-        }, 90);
-      }
-
-      overlay.addEventListener("click", () => {
-        overlay.classList.add("fade-out");
-        setTimeout(() => (overlay.style.display = "none"), 1000);
-        playMusic();
-      });
-
-      // Lightbox Functions (tetap sama, hanya sedikit lebih efisien)
-      function showSlide() {
-        const currentCard = photos[currentIndex];
-        const media = currentCard.querySelector("img, video");
-        const captionText = currentCard.querySelector(".caption").textContent;
-
-        mediaContainer.innerHTML = "";
-
-        if (media.tagName === "VIDEO") {
-          const video = document.createElement("video");
-          video.src = media.src;
-          video.controls = true;
-          video.autoplay = true;
-          video.loop = false;
-          video.muted = false;
-          video.playsInline = true;
-          mediaContainer.appendChild(video);
-          video.play().catch(() => {});
-          video.addEventListener("ended", () => {
-            if (autoSlideEnabled) goToNext();
-          });
-        } else {
-          const img = document.createElement("img");
-          img.src = media.src;
-          mediaContainer.appendChild(img);
-        }
-
-        const captionEl = document.createElement("div");
-        captionEl.className = "lightbox-caption";
-        captionEl.textContent = captionText;
-        mediaContainer.appendChild(captionEl);
-      }
-
-      function resetTimer() {
-        clearInterval(slideInterval);
-        if (autoSlideEnabled) slideInterval = setInterval(goToNext, 4500);
-      }
-
-      function goToNext() {
-        currentIndex = (currentIndex + 1) % photos.length;
-        showSlide();
-        if (autoSlideEnabled) resetTimer();
-      }
-
-      function goToPrev() {
-        currentIndex = (currentIndex - 1 + photos.length) % photos.length;
-        showSlide();
-        if (autoSlideEnabled) resetTimer();
-      }
-
-      function toggleAutoSlide() {
-        autoSlideEnabled = !autoSlideEnabled;
-        if (autoSlideEnabled) {
-          autoBtn.textContent = "Auto Slide ON";
-          autoBtn.classList.add("active");
-          resetTimer();
-        } else {
-          autoBtn.textContent = "Auto Slide OFF";
-          autoBtn.classList.remove("active");
-          clearInterval(slideInterval);
-        }
-      }
-
-      function toggleMinimize() {
-        isMinimized = !isMinimized;
-        lightbox.classList.toggle("minimized");
-        if (!isMinimized) resetTimer();
-      }
-
-      function closeLightbox() {
-        lightbox.classList.remove("active");
-        lightbox.classList.remove("minimized");
-        isMinimized = false;
-        clearInterval(slideInterval);
-        const video = mediaContainer.querySelector("video");
-        if (video) video.pause();
-      }
-
-      // Event klik gallery
-      photos.forEach((card, i) => {
-        card.addEventListener("click", (e) => {
-          createHeartExplosion(e, card);
-          currentIndex = i;
-          lightbox.classList.add("active");
-          isMinimized = false;
-          showSlide();
         });
       });
-    </script>
-  </body>
+    }
+
+    function createMeteor() {
+      if (Math.random() < 0.022) {
+        const sizeType = Math.random();
+        let size = sizeType < 0.4 ? 2.8 + Math.random()*1.5 : sizeType < 0.8 ? 4.2 + Math.random()*2 : 5.5 + Math.random()*2.5;
+        let length = sizeType < 0.4 ? 80 + Math.random()*50 : sizeType < 0.8 ? 120 + Math.random()*60 : 160 + Math.random()*70;
+        let speed = sizeType < 0.4 ? 11 + Math.random()*4 : sizeType < 0.8 ? 13 + Math.random()*5 : 15 + Math.random()*6;
+        meteors.push({ x: Math.random() * w * 1.4, y: Math.random() * h * 0.35 - 100, length, speed, opacity: 1, size });
+      }
+    }
+
+    function drawMeteors() {
+      for (let i = meteors.length - 1; i >= 0; i--) {
+        const m = meteors[i];
+        const tailX = m.x - m.length * 0.78;
+        const tailY = m.y - m.length * 0.58;
+        const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
+        grad.addColorStop(0, `rgba(255, 245, 180, ${m.opacity})`);
+        grad.addColorStop(0.35, `rgba(160, 220, 255, ${m.opacity * 0.75})`);
+        grad.addColorStop(1, `rgba(80, 160, 255, 0)`);
+
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = m.size * 2.4;
+        ctx.lineCap = "round";
+        ctx.shadowBlur = 35;
+        ctx.shadowColor = "#a0d8ff";
+        ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(tailX, tailY); ctx.stroke();
+
+        ctx.shadowBlur = 50; ctx.shadowColor = "#ffeb88";
+        ctx.fillStyle = `rgba(255, 255, 240, ${m.opacity})`;
+        ctx.beginPath(); ctx.arc(m.x, m.y, m.size, 0, Math.PI * 2); ctx.fill();
+
+        ctx.shadowBlur = 25; ctx.fillStyle = "#ffffff";
+        ctx.beginPath(); ctx.arc(m.x, m.y, m.size * 0.5, 0, Math.PI * 2); ctx.fill();
+
+        m.x += m.speed * 0.72; m.y += m.speed; m.opacity -= 0.018;
+        if (m.opacity <= 0.04) meteors.splice(i, 1);
+      }
+      ctx.shadowBlur = 0;
+    }
+
+    function animate() {
+      time += 0.018;
+      drawStars();
+      createMeteor();
+      drawMeteors();
+      requestAnimationFrame(animate);
+    }
+
+    // Lightbox
+    let currentIndex = 0;
+    let autoSlideEnabled = false;
+    let slideInterval = null;
+
+    const photos = document.querySelectorAll(".photo-card");
+    const lightbox = document.getElementById("lightbox");
+    const mediaContainer = document.getElementById("media-container");
+    const captionEl = document.getElementById("lightbox-caption");
+    const autoBtn = document.getElementById("auto-slide-btn");
+    const volumeBtn = document.getElementById("volume-btn");
+
+    function showSlide() {
+      mediaContainer.innerHTML = "";
+      const card = photos[currentIndex];
+      const media = card.querySelector("img, video");
+
+      if (media.tagName === "VIDEO") {
+        const v = document.createElement("video");
+        v.src = media.src; v.controls = true; v.autoplay = true; v.playsInline = true; v.loop = true;
+        mediaContainer.appendChild(v);
+      } else {
+        const img = document.createElement("img");
+        img.src = media.src;
+        mediaContainer.appendChild(img);
+      }
+      captionEl.textContent = card.querySelector(".caption").textContent || "";
+    }
+
+    function goToNext() { currentIndex = (currentIndex + 1) % photos.length; showSlide(); }
+    function goToPrev() { currentIndex = (currentIndex - 1 + photos.length) % photos.length; showSlide(); }
+
+    function toggleAutoSlide() {
+      autoSlideEnabled = !autoSlideEnabled;
+      autoBtn.textContent = autoSlideEnabled ? "Auto Slide ON" : "Auto Slide OFF";
+      autoBtn.classList.toggle("active", autoSlideEnabled);
+      clearInterval(slideInterval);
+      if (autoSlideEnabled) slideInterval = setInterval(goToNext, 3200);
+    }
+
+    function toggleVolume() {
+      isMuted = !isMuted;
+      music.muted = isMuted;
+      volumeBtn.textContent = isMuted ? "🔇" : "🔊";
+    }
+
+    function toggleMinimize() { lightbox.classList.toggle("minimized"); }
+
+    function closeLightbox() {
+      lightbox.classList.remove("active", "minimized");
+      clearInterval(slideInterval);
+      autoSlideEnabled = false;
+      autoBtn.textContent = "Auto Slide OFF";
+      autoBtn.classList.remove("active");
+      const v = mediaContainer.querySelector("video");
+      if (v) v.pause();
+      filtersContainer.classList.remove("hidden");
+    }
+
+    photos.forEach((card, i) => {
+      card.addEventListener("click", () => {
+        currentIndex = i;
+        lightbox.classList.add("active");
+        showSlide();
+        filtersContainer.classList.add("hidden");
+      });
+    });
+
+    // Music Overlay
+    const overlay = document.getElementById("overlay");
+    overlay.addEventListener("click", () => {
+      overlay.classList.add("fade-out");
+      setTimeout(() => overlay.style.display = "none", 1000);
+      music.volume = 0.42;
+      music.play();
+    });
+
+    window.addEventListener("resize", () => {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+      initLayers();
+    });
+    window.addEventListener('scroll', () => { scrollY = window.scrollY; });
+
+    initLayers();
+    animate();
+  </script>
+</body>
 </html>
